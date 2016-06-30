@@ -20,7 +20,7 @@ import (
 //
 // For a given cutoff value, observations corresponding to entries in y
 // greater than the cutoff value are classified as false, while those
-// less than (or equal to) the cutoff value are classified as true. These
+// less than or equal to the cutoff value are classified as true. These
 // assigned class labels are compared with the true values in the classes
 // slice and used to calculate the FPR and TPR.
 //
@@ -29,8 +29,8 @@ import (
 // If cutoffs is nil or empty all possible cutoffs are calculated,
 // resulting in fpr and tpr having length one greater than the number of
 // unique values in y. Otherwise fpr and tpr will be returned with the
-// same length as cutoffs. EquallySpaced can be used to generate
-// equally spaced cutoffs.
+// same length as cutoffs. floats.Span can be used to generate equally 
+// spaced cutoffs.
 //
 // More details about ROC curves are available at
 // https://en.wikipedia.org/wiki/Receiver_operating_characteristic
@@ -42,17 +42,21 @@ func ROC(cutoffs, y []float64, classes []bool, weights []float64) (tpr, fpr []fl
 		panic("stat: slice length mismatch")
 	}
 	if !sort.Float64sAreSorted(y) {
-		panic("stat: input must be sorted")
+		panic("stat: input must be sorted ascending")
 	}
 	if !sort.Float64sAreSorted(cutoffs) {
-		panic("stat: input must be sorted")
+		panic("stat: cutoff values must be sorted ascending")
 	}
 	if len(y) == 0 {
 		return nil, nil
 	}
 	var bin int
 	if len(cutoffs) == 0 {
-		cutoffs = make([]float64, len(y)+1)
+		if cutoffs == nil || cap(cutoffs) < len(y)+1 {
+		    cutoffs = make([]float64, len(y)+1)
+		} else {
+		    cutoffs = cutoffs[:len(y)+1]
+		}
 		cutoffs[0] = math.Nextafter(y[0], y[0]-1)
 		// Choose all possible cutoffs but remove duplicate values
 		// in y.
@@ -62,7 +66,7 @@ func ROC(cutoffs, y []float64, classes []bool, weights []float64) (tpr, fpr []fl
 			}
 			cutoffs[bin+1] = u
 		}
-		cutoffs = cutoffs[0:(bin + 2)]
+		cutoffs = cutoffs[0:bin + 2]
 	}
 
 	tpr = make([]float64, len(cutoffs))
@@ -71,9 +75,9 @@ func ROC(cutoffs, y []float64, classes []bool, weights []float64) (tpr, fpr []fl
 	var nPos, nNeg float64
 	for i, u := range classes {
 		// Update the bin until it matches the next y value
-		// (skip empty bins).
-		for (bin < len(cutoffs)) && (y[i] > cutoffs[bin]) {
-			if bin == (len(cutoffs) - 1) {
+		// skipping empty bins.
+		for bin < len(cutoffs) && y[i] > cutoffs[bin] {
+			if bin == len(cutoffs) - 1 {
 				break
 			}
 			bin++
@@ -105,23 +109,3 @@ func ROC(cutoffs, y []float64, classes []bool, weights []float64) (tpr, fpr []fl
 	return tpr, fpr
 }
 
-// EquallySpaced returns n equally spaced values,
-// beggining eps less than min and ending at max. n must be
-// at least two, and min must not be greater than max.
-func EquallySpaced(min, max float64, n int) (cutoffs []float64) {
-	if max < min {
-		panic("stat: max < min")
-	}
-	if n < 2 {
-		panic("stat: n too small")
-	}
-
-	cutoffs = make([]float64, n)
-	w := (max - min) / float64(n-1)
-	for i := range cutoffs {
-		cutoffs[i] = min + w*float64(i)
-	}
-	cutoffs[0] = math.Nextafter(min, min-1)
-
-	return cutoffs
-}

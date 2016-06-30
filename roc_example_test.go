@@ -6,7 +6,9 @@ package stat_test
 
 import (
 	"fmt"
+	"math"
 
+	"github.com/gonum/floats"
 	"github.com/gonum/stat"
 )
 
@@ -77,7 +79,8 @@ func ExampleROC_equallySpacedCutoffs() {
 	n := 9
 
 	stat.SortWeightedLabeled(y, classes, weights)
-	cutoffs := stat.EquallySpaced(y[0], y[len(y)-1], n)
+	cutoffs := make([]float64, n)
+	floats.Span(cutoffs, math.Nextafter(y[0], y[0]-1), y[len(y)-1])
 
 	tpr, fpr := stat.ROC(cutoffs, y, classes, weights)
 	fmt.Printf("true  positive rate: %v\n", tpr)
