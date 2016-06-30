@@ -29,7 +29,7 @@ import (
 // If cutoffs is nil or empty all possible cutoffs are calculated,
 // resulting in fpr and tpr having length one greater than the number of
 // unique values in y. Otherwise fpr and tpr will be returned with the
-// same length as cutoffs. floats.Span can be used to generate equally 
+// same length as cutoffs. floats.Span can be used to generate equally
 // spaced cutoffs.
 //
 // More details about ROC curves are available at
@@ -53,9 +53,9 @@ func ROC(cutoffs, y []float64, classes []bool, weights []float64) (tpr, fpr []fl
 	var bin int
 	if len(cutoffs) == 0 {
 		if cutoffs == nil || cap(cutoffs) < len(y)+1 {
-		    cutoffs = make([]float64, len(y)+1)
+			cutoffs = make([]float64, len(y)+1)
 		} else {
-		    cutoffs = cutoffs[:len(y)+1]
+			cutoffs = cutoffs[:len(y)+1]
 		}
 		cutoffs[0] = math.Nextafter(y[0], y[0]-1)
 		// Choose all possible cutoffs but remove duplicate values
@@ -66,7 +66,7 @@ func ROC(cutoffs, y []float64, classes []bool, weights []float64) (tpr, fpr []fl
 			}
 			cutoffs[bin+1] = u
 		}
-		cutoffs = cutoffs[0:bin + 2]
+		cutoffs = cutoffs[0 : bin+2]
 	}
 
 	tpr = make([]float64, len(cutoffs))
@@ -77,7 +77,7 @@ func ROC(cutoffs, y []float64, classes []bool, weights []float64) (tpr, fpr []fl
 		// Update the bin until it matches the next y value
 		// skipping empty bins.
 		for bin < len(cutoffs) && y[i] > cutoffs[bin] {
-			if bin == len(cutoffs) - 1 {
+			if bin == len(cutoffs)-1 {
 				break
 			}
 			bin++
@@ -108,4 +108,3 @@ func ROC(cutoffs, y []float64, classes []bool, weights []float64) (tpr, fpr []fl
 
 	return tpr, fpr
 }
-
