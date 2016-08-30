@@ -3,6 +3,8 @@
 // license that can be found in the LICENSE file.
 
 // Package stat provides generalized statistical functions.
+// Functions that take a data matrix argument assume that rows correspond to observations
+// and columns to variables.
 package stat
 
 import (
